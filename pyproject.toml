@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtdp"  # Multi-Task Diffusion Policy
+version = "0.1.0"
+description = "Multi-Task Diffusion Transformer (DiT) Policy for robot learning"
+readme = "README.md"
+authors = [
+    { name="Bryson Jones", email="bkjones97@gmail.com" },
+]
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "torch>=2.7.0",
+    "torchvision>=0.15.0",
+    "transformers>=4.40.0",
+    "diffusers>=0.30.0",
+    "timm>=1.0.20",
+    "safetensors>=0.4.3",
+    "draccus>=0.9.0",
+    "tqdm>=4.66.0",
+    "huggingface-hub>=0.20.0",
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
+    "pyyaml>=6.0",
+    "lerobot>=0.4.2", 
+    "einops>=0.7.0",
+    "wandb>=0.16.0",
+    "typing_extensions>=4.5.0",
+    "matplotlib>=3.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "pre-commit>=3.0.0",
+]
+
+modal = [
+    "modal>=1.2.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable a comprehensive set of linting rules
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = []
+
+# Allow autofix for all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Indent with spaces
+indent-style = "space"
+
