@@ -26,10 +26,10 @@ import numpy as np
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.policies.utils import prepare_observation_for_inference
+from lerobot.utils.constants import ACTION
 
 from multitask_dit_policy.model.model import MultiTaskDiTPolicy
 from multitask_dit_policy.utils.utils import (
-    ACTION,
     move_to_device,
     normalize_batch,
     unnormalize_batch,
