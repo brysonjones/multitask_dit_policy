@@ -58,10 +58,10 @@ class TrainConfig:
 
     # Training parameters
     batch_size: int = 16
-    num_workers: int = 4
-    train_steps: int = 40000
-    save_freq: int = 1000
-    log_freq: int = 1
+    num_workers: int = 2
+    train_steps: int = 10_000
+    save_freq: int = 500
+    log_freq: int = 25
     output_dir: str = "outputs/train_multi_task_dit"
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     use_amp: bool = False

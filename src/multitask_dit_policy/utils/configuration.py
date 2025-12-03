@@ -388,18 +388,6 @@ class MultiTaskDiTConfig:
 
     def validate_features(self) -> None:
         """Validate that required input features are present and properly configured."""
-
-        # Validate crop shape fits within image dimensions
-        crop_shape = self.observation_encoder.vision.crop_shape
-        if crop_shape is not None:
-            for key, image_ft in self.image_features.items():
-                if crop_shape[0] > image_ft.shape[1] or crop_shape[1] > image_ft.shape[2]:
-                    raise ValueError(
-                        f"`crop_shape` should fit within the images shapes. Got {crop_shape} "
-                        f"for `crop_shape` and {image_ft.shape} for "
-                        f"`{key}`."
-                    )
-
         # Ensure all images have same shape
         if len(self.image_features) > 0:
             first_image_key, first_image_ft = next(iter(self.image_features.items()))
