@@ -27,7 +27,7 @@ uv python install
 uv sync
 ```
 
-## Environment Variables
+### Environment Variables
 
 Set the following environment variables before training:
 
@@ -53,7 +53,7 @@ If you don't have a LeRobotDataset yet, you can use a toy dataset provided by Hu
 hf download lerobot/pusht --repo-type dataset --local-dir /your/local/dir/pusht
 ```
 
-NOTE: I intentionally didn't add the ability to pull datasets from the HF hub with the interface I've implemented, as I think it adds unneccessary complexity and distracts from the simplicity I aim for with this project. If this capability is of interest to you, please create an issue.
+NOTE: I intentionally did ***not*** add the ability to pull LeRobotDatasets from the HF hub and instead require all datasets to be locally available (unless you use Modal training, where the datasets should be stored on a Modal volume as described below). If this capability is of interest to you, please create an issue.
 
 
 ## Local Training
@@ -84,7 +84,7 @@ NOTE: If you are using the toy `pusht` dataset, the images will be below the def
 
 Modal has a great developer experience, especially when you're just doing small training experiments up to 8 GPUs. I've added a simple script that will deploy training jobs onto modal with specified GPU resources.
 
-NOTE: compared to some GPU providers, Modal's prices can be a bit steeper (>1.5x the commodity price or more), so be aware of that.
+> **⚠️ NOTE:** Compared to some GPU providers, Modal's prices can be noticeably higher (sometimes >1.5x the commodity price or more). Please budget accordingly and check costs before launching long jobs!
 
 Below is an overview of how you can use scripts to train a policy on modal
 
@@ -135,6 +135,10 @@ uv run -m multitask_dit_policy.train_modal \
 
 **Note:** When specifying the dataset `root` with Modal, specify the path relative to `/data_volume` (e.g., `datasets/my_dataset`). The training script will automatically prepend `/data_volume` to your root path, so it becomes `/data_volume/datasets/my_dataset`.
 
+To run in detached mode which will keep the training job running if the terminal session closes/ends, use:
+```
+--detach=true
+```
 
 ## Contributing
 
@@ -143,7 +147,7 @@ Contributions, improvements, and bug fixes are welcome! Please feel free to subm
 
 ## Acknowledgements and References
 
-Many utility functions were adapted from LeRobot to build this project. Additionially the base structure of the policy was inspired by the LeRobot Vanilla Diffusion Policy implementation, with most interfaces remaining identical to simplify downstream integration into the lerobot project.
+Many utility functions were adapted from LeRobot to build this project. Additionially the base structure of the policy was inspired by the LeRobot Vanilla Diffusion Policy implementation, with most interfaces remaining identical to simplify downstream integration into the LeRobot project.
 
 The integration into LeRobot can be found [here](TODO)
 
@@ -157,9 +161,7 @@ Additionally, the following resources were referenced during this implementation
   url = {https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/},
   note = {Blog post}
 }
-```
 
-```bibtex
 @misc{trilbmteam2025carefulexaminationlargebehavior,
       title={A Careful Examination of Large Behavior Models for Multitask Dexterous Manipulation}, 
       author={TRI LBM Team},
@@ -169,9 +171,17 @@ Additionally, the following resources were referenced during this implementation
       primaryClass={cs.RO},
       url={https://arxiv.org/abs/2507.05331}, 
 }
+
+@misc{cadene2024lerobot,
+    author = {Cadene, Remi and Alibert, Simon and Soare, Alexander and Gallouedec, Quentin and Zouitine, Adil and Palma, Steven and Kooijmans, Pepijn and Aractingi, Michel and Shukor, Mustafa and Aubakirova, Dana and Russi, Martino and Capuano, Francesco and Pascal, Caroline and Choghari, Jade and Moss, Jess and Wolf, Thomas},
+    title = {LeRobot: State-of-the-art Machine Learning for Real-World Robotics in Pytorch},
+    howpublished = "\url{https://github.com/huggingface/lerobot}",
+    year = {2024}
+}
 ```
 
 ## Cite This Work
+If you use this work in your research, please cite:
 
 ```bibtex
 @misc{jones2025multitaskditpolicy,
