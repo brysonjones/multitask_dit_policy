@@ -50,7 +50,7 @@ To train this model, you will need a dataset in this format available locally.
 
 If you don't have a LeRobotDataset yet, you can use a toy dataset provided by HuggingFace:
 ```
-huggingface-cli download lerobot/pusht --repo-type dataset --local-dir /your/local/dir/pusht
+hf download lerobot/pusht --repo-type dataset --local-dir /your/local/dir/pusht
 ```
 
 NOTE: I intentionally didn't add the ability to pull datasets from the HF hub with the interface I've implemented, as I think it adds unneccessary complexity and distracts from the simplicity I aim for with this project. If this capability is of interest to you, please create an issue.
@@ -66,9 +66,19 @@ uv run -m multitask_dit_policy.train \
     --batch_size=16 \
     --train_steps=2000 \
     --device=cuda \
-    --output_dir=outputs/train_multi_task_dit
+    --output_dir=outputs/train_multi_task_dit \
 ```
 
+To see the full list of configuration options, run:
+```bash
+uv run -m multitask_dit_policy.train --help
+```
+
+NOTE: If you are using the toy `pusht` dataset, the images will be below the default crop shape of (224, 224) for CLIP, and you will need to resize the images using:
+```
+--policy.observation_encoder.vision.type=clip \
+--policy.observation_encoder.vision.resize_shape='[224,224]' 
+```
 
 ## Cloud Training Using Modal
 
