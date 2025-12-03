@@ -65,7 +65,7 @@ uv run -m multitask_dit_policy.train \
     --dataset_path=/path/to/dataset \
     --batch_size=16 \
     --train_steps=2000 \
-    --device=cuda
+    --device=cuda \
     --output_dir=outputs/train_multi_task_dit
 ```
 
