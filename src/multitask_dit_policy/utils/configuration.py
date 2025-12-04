@@ -18,12 +18,10 @@ import warnings
 from dataclasses import dataclass, field
 from typing import Any
 
+from lerobot.configs.types import FeatureType, PolicyFeature
 from lerobot.utils.constants import ACTION, OBS_ENV_STATE, OBS_STATE
 
-from .utils import (
-    FeatureType,
-    NormalizationMode,
-)
+from .utils import NormalizationMode
 
 # Suppress Pydantic warnings from draccus ChoiceRegistry union types
 # This is an interaction with draccus that we can't control
@@ -373,6 +371,32 @@ class MultiTaskDiTConfig:
     def __post_init__(self):
         if self.drop_n_last_frames is None:
             self.drop_n_last_frames = self.horizon - self.n_action_steps - self.n_obs_steps + 1
+
+        # Convert feature dictionaries to PolicyFeature objects if they were loaded from JSON
+        # (when loading from JSON, draccus parses them as plain dicts)
+        if self.input_features:
+            converted_input_features = {}
+            for key, value in self.input_features.items():
+                if isinstance(value, dict) and not isinstance(value, PolicyFeature):
+                    # Convert dict to PolicyFeature
+                    feature_type = FeatureType(value["type"])
+                    shape = tuple(value["shape"])
+                    converted_input_features[key] = PolicyFeature(type=feature_type, shape=shape)
+                else:
+                    converted_input_features[key] = value
+            self.input_features = converted_input_features
+
+        if self.output_features:
+            converted_output_features = {}
+            for key, value in self.output_features.items():
+                if isinstance(value, dict) and not isinstance(value, PolicyFeature):
+                    # Convert dict to PolicyFeature
+                    feature_type = FeatureType(value["type"])
+                    shape = tuple(value["shape"])
+                    converted_output_features[key] = PolicyFeature(type=feature_type, shape=shape)
+                else:
+                    converted_output_features[key] = value
+            self.output_features = converted_output_features
 
     def get_optimizer_preset(self) -> AdamConfig:
         """Return Adam optimizer configuration

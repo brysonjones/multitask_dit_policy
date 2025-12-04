@@ -140,6 +140,44 @@ To run in detached mode which will keep the training job running if the terminal
 --detach=true
 ```
 
+## Running Inference
+
+The project includes an inference script that loads a trained model checkpoint and runs inference on a single random sample from your dataset, displaying the predicted actions and observations.
+
+This is to simply demonstrate how you would set up an inference loop if you wanted to integrate this policy into your own project.
+
+### Basic Usage
+
+```bash
+uv run -m multitask_dit_policy.inference_example \
+    --checkpoint_dir=outputs/train_multi_task_dit_test_1/final_model \
+    --dataset_path=/path/to/dataset \
+    --device=cuda
+```
+
+### Configuration Options
+
+- `--checkpoint_dir` - **Required**. Path to the checkpoint directory containing `model.safetensors`, `config.json`, and `dataset_stats.json`
+- `--dataset_path` - **Required**. Path to the LeRobotDataset directory
+
+### Example
+
+```bash
+uv run -m multitask_dit_policy.inference_example \
+    --checkpoint_dir=outputs/train_multi_task_dit_test_1/final_model \
+    --dataset_path=/your/local/dir/pusht \
+    --device=cuda \
+```
+
+The script will:
+1. Load the model from the specified checkpoint directory
+2. Load dataset statistics for proper normalization
+3. Select a random sample from the dataset
+4. Run inference to generate predicted actions
+5. Display a visualization showing the input images (if available) and the predicted action trajectory
+
+**Note:** The checkpoint directory must contain `dataset_stats.json` for proper action normalization. This file is automatically saved during training.
+
 ## Contributing
 
 Contributions, improvements, and bug fixes are welcome! Please feel free to submit bug reports, feature requests, and pull requests. This project is open to everyone in accordance with the license provided in the repo.

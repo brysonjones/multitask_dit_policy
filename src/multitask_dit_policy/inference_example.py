@@ -25,8 +25,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.datasets.utils import build_dataset_frame
 from lerobot.policies.utils import prepare_observation_for_inference
-from lerobot.utils.constants import ACTION
+from lerobot.utils.constants import ACTION, OBS_STR
 
 from multitask_dit_policy.model.model import MultiTaskDiTPolicy
 from multitask_dit_policy.utils.utils import (
@@ -51,10 +52,9 @@ class InferenceConfig:
     checkpoint_dir: str = ""
     dataset_path: str = ""
     device: str = "cuda"
-    seed: int = 42  # Random seed for selecting dataset sample
+    seed: int = 17
 
 
-@draccus.wrap()
 def inference(cfg: InferenceConfig):
     checkpoint_dir = Path(cfg.checkpoint_dir)
     dataset_path = Path(cfg.dataset_path) if cfg.dataset_path else None
@@ -117,7 +117,6 @@ def inference(cfg: InferenceConfig):
     random_idx = random.randint(0, dataset_size - 1)
     print(f"Loading random sample {random_idx} from dataset (size: {dataset_size})...")
     sample = dataset[random_idx]
-    sample = move_to_device(sample, device, non_blocking=False)
 
     # Extract images for visualization before preprocessing
     print("Preparing sample for inference...")
@@ -141,20 +140,28 @@ def inference(cfg: InferenceConfig):
     print("Generating predicted actions from policy...")
 
     with torch.no_grad():
-        # Prepare observation for inference (handles preprocessing)
-        obs = prepare_observation_for_inference(
-            sample,
-            policy_config.input_features,
-            device=device,
-        )
-
+        # Keep only observation or task keys in `sample`
+        sample = {k: v for k, v in sample.items() if k.startswith("observation") or k == "task"}
+        
+        # Move sample tensors to device (stats_tensors are already on device)
+        sample = move_to_device(sample, device, non_blocking=False)
+        
         normalized_obs = normalize_batch(
-            obs,
+            sample,
             policy_config.input_features,
             policy_config.output_features,
             policy_config.normalization_mapping,
             stats_tensors,
         )
+
+        for name in normalized_obs:
+            if "task" in name:
+                continue
+            if "image" in name:
+                normalized_obs[name] = normalized_obs[name].type(torch.float32) / 255
+                normalized_obs[name] = normalized_obs[name].permute(2, 0, 1).contiguous()
+            normalized_obs[name] = normalized_obs[name].unsqueeze(0)
+            normalized_obs[name] = normalized_obs[name].to(device)
 
         # Get the predicted action
         # select_action will populate queues (copying the observation if needed) and return an action
@@ -255,4 +262,6 @@ def inference(cfg: InferenceConfig):
 
 
 if __name__ == "__main__":
-    inference()
+    # Use draccus.parse() directly with explicit config class to avoid auto-discovery
+    cfg = draccus.parse(InferenceConfig)
+    inference(cfg)
