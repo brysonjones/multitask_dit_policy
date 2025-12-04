@@ -112,40 +112,27 @@ def inference(cfg: InferenceConfig):
 
     policy_config = policy.config
 
-    # Get a random sample from the dataset (single frame, no temporal stacking)
     dataset_size = len(dataset)
     random_idx = random.randint(0, dataset_size - 1)
     print(f"Loading random sample {random_idx} from dataset (size: {dataset_size})...")
     sample = dataset[random_idx]
+    # filter out everything except the observation and task keys
+    # in practice, you would just built the observation dict with only these keys
+    # this is necessary here because we are loading from the dataset, which has all keys
+    sample = {k: v for k, v in sample.items() if k.startswith("observation") or k == "task"}
+    sample = move_to_device(sample, device, non_blocking=False)
+        
+    for name in sample:
+        if "task" in name:
+            continue
+        sample[name] = sample[name].unsqueeze(0)
 
-    # Extract images for visualization before preprocessing
-    print("Preparing sample for inference...")
-    all_images = []
-
-    if policy_config.image_features:
-        image_keys = list(policy_config.image_features.keys())
-        for key in image_keys:
-            if key in sample:
-                img_tensor = sample[key]
-                if isinstance(img_tensor, torch.Tensor):
-                    # Single frame: (C, H, W)
-                    if len(img_tensor.shape) == 3:  # (C, H, W)
-                        all_images.append(img_tensor.cpu().numpy())
-
-    # Reset policy
     policy.reset()
 
-    # Use prepare_observation_for_inference and select_action
-    # The sample is a single frame, select_action will handle queue population
     print("Generating predicted actions from policy...")
 
     with torch.no_grad():
-        # Keep only observation or task keys in `sample`
-        sample = {k: v for k, v in sample.items() if k.startswith("observation") or k == "task"}
-        
-        # Move sample tensors to device (stats_tensors are already on device)
-        sample = move_to_device(sample, device, non_blocking=False)
-        
+
         normalized_obs = normalize_batch(
             sample,
             policy_config.input_features,
@@ -154,24 +141,24 @@ def inference(cfg: InferenceConfig):
             stats_tensors,
         )
 
-        for name in normalized_obs:
-            if "task" in name:
-                continue
-            if "image" in name:
-                normalized_obs[name] = normalized_obs[name].type(torch.float32) / 255
-                normalized_obs[name] = normalized_obs[name].permute(2, 0, 1).contiguous()
-            normalized_obs[name] = normalized_obs[name].unsqueeze(0)
-            normalized_obs[name] = normalized_obs[name].to(device)
+        # Get the full action trajectory by calling select_action until queue is empty
+        # NOTE: This while loop is just to get the full action trajectory, in practice 
+        #       you would just call select_action per loop iteration.
+        predicted_actions_list = []
+        while True:
+            predicted_action_tensor = policy.select_action(normalized_obs)
 
-        # Get the predicted action
-        # select_action will populate queues (copying the observation if needed) and return an action
-        predicted_action_tensor = policy.select_action(normalized_obs)
+            if len(predicted_action_tensor.shape) > 1:
+                predicted_action_tensor = predicted_action_tensor.squeeze()
+            predicted_actions_list.append(predicted_action_tensor)
+            # Stop when queue is empty (after we've collected all actions from the chunk)
+            if len(policy._queues[ACTION]) == 0:
+                break
 
-        # Unnormalize the action (add batch dimension if needed)
-        action_with_batch = (
-            predicted_action_tensor.unsqueeze(0) if len(predicted_action_tensor.shape) == 1 else predicted_action_tensor
-        )
-        action_dict = {ACTION: action_with_batch}
+        predicted_action_trajectory = torch.stack(predicted_actions_list, dim=0)
+
+        # Unnormalize the full action trajectory
+        action_dict = {ACTION: predicted_action_trajectory.unsqueeze(0)}
         unnormalized_action_dict = unnormalize_batch(
             action_dict,
             policy_config.output_features,
@@ -179,67 +166,29 @@ def inference(cfg: InferenceConfig):
             stats_tensors,
             feature_keys=[ACTION],
         )
-        predicted_action = unnormalized_action_dict[ACTION]
-        # Remove batch dimension if it was added
-        if len(predicted_action.shape) > 1:
-            predicted_action = predicted_action[0]
-        predicted_action = predicted_action.cpu().numpy()
-        predicted_actions = [predicted_action]
+        predicted_actions_trajectory = unnormalized_action_dict[ACTION]
+        
+        # Remove batch dimension and any extra dimensions
+        predicted_actions_trajectory = predicted_actions_trajectory.squeeze(0)
+        
+        predicted_actions = predicted_actions_trajectory.cpu().numpy()
+    
+    action_dim = predicted_actions.shape[1]
+    horizon = predicted_actions.shape[0]
+    print(f"Generated action trajectory: shape={predicted_actions.shape} (horizon={horizon}, action_dim={action_dim})")
 
-    # Convert actions to numpy arrays
-    predicted_actions_array = np.array(predicted_actions)  # (1, action_dim)
-    action_dim = (
-        predicted_actions_array.shape[1] if len(predicted_actions_array.shape) > 1 else len(predicted_actions_array)
-    )
-
-    # Create visualization
     print("Creating visualization...")
 
-    # Determine layout: images on top (if available), actions below
-    num_image_cols = min(5, max(1, len(all_images))) if all_images else 0
-    num_image_rows = (len(all_images) + num_image_cols - 1) // num_image_cols if all_images else 0
+    plt.figure(figsize=(16, 8))
+    ax = plt.subplot(1, 1, 1)
 
-    # Total rows: images + 1 for actions
-    total_rows = num_image_rows + 1 if all_images else 1
-
-    plt.figure(figsize=(16, 4 + 2 * total_rows))
-
-    # Plot images if available
-    if all_images:
-        for idx, img in enumerate(all_images):
-            ax = plt.subplot(total_rows, num_image_cols, idx + 1)
-            # Convert from (C, H, W) to (H, W, C) for display
-            if len(img.shape) == 3 and img.shape[0] == 3:  # RGB (C, H, W)
-                img_display = np.transpose(img, (1, 2, 0))
-                # Normalize to [0, 1] if needed
-                if img_display.max() > 1.0:
-                    img_display = img_display / 255.0
-                ax.imshow(np.clip(img_display, 0, 1))
-            elif len(img.shape) == 3 and img.shape[0] == 1:  # Grayscale (1, H, W)
-                img_display = img[0]
-                ax.imshow(img_display, cmap="gray")
-            elif len(img.shape) == 2:  # Already (H, W)
-                ax.imshow(img, cmap="gray")
-            else:
-                # Fallback: try to display first channel
-                ax.imshow(img[0] if len(img.shape) == 3 else img, cmap="gray")
-            ax.set_title(f"Frame {idx}", fontsize=8)
-            ax.axis("off")
-
-    # Plot predicted action trajectory
-    ax = plt.subplot(total_rows, 1, total_rows)
-
-    # Ensure predicted_actions_array is 2D
-    if len(predicted_actions_array.shape) == 1:
-        predicted_actions_array = predicted_actions_array.reshape(1, -1)
-
-    # Plot predicted action trajectory
-    timesteps = np.arange(len(predicted_actions_array))
+    # predicted_actions_array should already be 2D (horizon, action_dim) from above
+    timesteps = np.arange(len(predicted_actions))
     for dim in range(action_dim):
         ax.plot(
             timesteps,
-            predicted_actions_array[:, dim],
-            label=f"Dim {dim}",
+            predicted_actions[:, dim],
+            label=f"Action State {dim}",
             linewidth=2,
             alpha=0.8,
             marker="o",
@@ -255,10 +204,6 @@ def inference(cfg: InferenceConfig):
 
     plt.tight_layout()
     plt.show()
-
-    print("Visualization complete!")
-    print(f"  Predicted action: {action_dim} dimensions")
-    print(f"  Images displayed: {len(all_images)}")
 
 
 if __name__ == "__main__":

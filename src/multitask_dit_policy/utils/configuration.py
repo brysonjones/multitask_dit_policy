@@ -340,7 +340,7 @@ class MultiTaskDiTConfig:
     # Temporal structure - controls how the policy processes time and predicts actions
     n_obs_steps: int = 2  # num observations for temporal context (..., t-1, t)
     horizon: int = 100  # predicted action steps into the future
-    n_action_steps: int = 24  # actions per policy call (receding horizon) -- ~0.8s is a good place to start
+    n_action_steps: int = 24  # actions per policy call (receding horizon)
 
     # Normalization strategy - critical for diffusion model performance
     normalization_mapping: dict[str, NormalizationMode] = field(
