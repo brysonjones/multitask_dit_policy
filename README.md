@@ -178,6 +178,41 @@ The script will:
 
 **Note:** The checkpoint directory must contain `dataset_stats.json` for proper action normalization. This file is automatically saved during training.
 
+## Common Failure Modes and Debugging
+
+Training these models can be finicky (as is all AI research...)
+
+Here are some common failures modes I've seen when training this particular model, and approaches to debugging
+
+### Idling / No Motion
+
+In some cases, you may train the model and during inference see it's outputs "collapse", resulting in static or no motion. This collapse can occur at the starting point mid-way through a task.
+
+My intuition is this happens when the tasks or training data is especially multi-modal, and based on the observations the policy oscillates in its actions around some average output.
+
+This appears to happen in two specific cases:
+- When you don't have enough training data for your task. If you only have 20-100 examples, try to roughly double your dataset size and try again for the same task. Once you have above 300 examples or so for a single task if you are still seeing this, the task may be too complex, or have some part of the task that's unobservable that is causing the issue.
+- When your dataset contains multiple similar tasks. An example would be picking up and moving 2 different objects. While the object is different, the model is heavily relying on the language conditioning which might not be rich enough to give the model a strong differentiation in the actions it should take.
+
+**Debugging tips:**
+- Increase dataset size (double until you get to over 300 examples)
+- Train for longer, and up to 100k steps, even when the loss flatlines
+- Check if the model is receiving proper language instructions or increase diversity of instruction
+
+### Executing the Wrong Task
+
+Sometimes the robot will completely ignore your instruction and perform some other task. This generally will only happen if you have trained on multiple tasks
+
+**Potential causes:**
+- Language instruction ambiguity
+- Insufficient task-specific training data
+- Model confusion between similar tasks in the multitask dataset
+
+**Debugging tips:**
+- Verify language instruction clarity and specificity
+- Check task distribution in your training dataset and add weighting to the failing/ignored task
+- Consider task-specific fine-tuning 
+
 ## Contributing
 
 Contributions, improvements, and bug fixes are welcome! Please feel free to submit bug reports, feature requests, and pull requests. This project is open to everyone in accordance with the license provided in the repo.
