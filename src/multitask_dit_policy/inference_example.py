@@ -25,9 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.datasets.utils import build_dataset_frame
-from lerobot.policies.utils import prepare_observation_for_inference
-from lerobot.utils.constants import ACTION, OBS_STR
+from lerobot.utils.constants import ACTION
 
 from multitask_dit_policy.model.model import MultiTaskDiTPolicy
 from multitask_dit_policy.utils.utils import (
@@ -121,7 +119,7 @@ def inference(cfg: InferenceConfig):
     # this is necessary here because we are loading from the dataset, which has all keys
     sample = {k: v for k, v in sample.items() if k.startswith("observation") or k == "task"}
     sample = move_to_device(sample, device, non_blocking=False)
-        
+
     for name in sample:
         if "task" in name:
             continue
@@ -132,7 +130,6 @@ def inference(cfg: InferenceConfig):
     print("Generating predicted actions from policy...")
 
     with torch.no_grad():
-
         normalized_obs = normalize_batch(
             sample,
             policy_config.input_features,
@@ -142,7 +139,7 @@ def inference(cfg: InferenceConfig):
         )
 
         # Get the full action trajectory by calling select_action until queue is empty
-        # NOTE: This while loop is just to get the full action trajectory, in practice 
+        # NOTE: This while loop is just to get the full action trajectory, in practice
         #       you would just call select_action per loop iteration.
         predicted_actions_list = []
         while True:
@@ -167,12 +164,12 @@ def inference(cfg: InferenceConfig):
             feature_keys=[ACTION],
         )
         predicted_actions_trajectory = unnormalized_action_dict[ACTION]
-        
+
         # Remove batch dimension and any extra dimensions
         predicted_actions_trajectory = predicted_actions_trajectory.squeeze(0)
-        
+
         predicted_actions = predicted_actions_trajectory.cpu().numpy()
-    
+
     action_dim = predicted_actions.shape[1]
     horizon = predicted_actions.shape[0]
     print(f"Generated action trajectory: shape={predicted_actions.shape} (horizon={horizon}, action_dim={action_dim})")

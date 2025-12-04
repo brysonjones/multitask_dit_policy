@@ -227,7 +227,7 @@ class MultiTaskDiTPolicy(nn.Module):
             raise FileNotFoundError(f"config.json not found in {path}")
 
         with draccus.config_type("json"):
-            with open(config_file, "r") as f:
+            with open(config_file) as f:
                 config = draccus.load(cls.config_class, f)
 
         model = cls(config)
