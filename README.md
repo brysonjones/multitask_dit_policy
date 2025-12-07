@@ -1,14 +1,29 @@
 # multitask_dit_policy
 An open-source implementation of Multitask Diffusion-Transformer (DiT) Policy for robot manipulation
 
+![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)
+![Version](https://img.shields.io/badge/version-0.1.0-green.svg)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+
 ## Overview
 The goal of this project is to provide the community with a high quality implementation of Multitask DiT Policy that
 can be used as a baseline for model research and building on top of.
 
-I have made an effort to make the implementations as readable as possible, at the sacrifice of making the most
+![Multitask DiT Policy Architecture](assets/mtdp_architecture.png)
+*Architecture diagram of the Multitask Diffusion-Transformer (DiT) Policy model*
+
+I've made an effort to make the implementations as readable as possible, at the sacrifice of making the most
 optimized implementations, specifically with regards to the training loop.
 
-For a deep dive on technical details of the model, see [here](TODO)
+For a deep dive on technical details of the model, see the blog-post [here](https://brysonkjones.substack.com/p/dissecting-and-open-sourcing-multitask-diffusion-transformer-policy)
+
+## System Requirements
+
+### GPU Requirements
+
+- **Inference**: At least an RTX 5070 Ti (or equivalent GPU) is recommended for running inference with reasonable speed performance.
+- **Training**: A GPU with at least 24GB of VRAM is recommended for training, as I would target batch sizes over 128 if possible for training stability.
+
 
 ## Environment Setup
 
@@ -46,7 +61,9 @@ source ~/.bashrc
 
 I have built this implementation around the LeRobotDataset format from the [LeRobot](https://github.com/huggingface/lerobot/tree/main/src/lerobot) project.
 
-To train this model, you will need a dataset in this format available locally.
+To see details on this format see [LeRobotDataset](https://huggingface.co/docs/lerobot/en/lerobot-dataset-v3)
+
+To train, you will need a dataset in this format available locally.
 
 If you don't have a LeRobotDataset yet, you can use a toy dataset provided by HuggingFace:
 ```
@@ -73,6 +90,26 @@ To see the full list of configuration options, run:
 ```bash
 uv run -m multitask_dit_policy.train --help
 ```
+
+### Resuming Training
+
+To resume training from a checkpoint, use the `--checkpoint_path` parameter to specify the path to a previously saved checkpoint directory:
+
+```bash
+uv run -m multitask_dit_policy.train \
+    --dataset_path=/path/to/dataset \
+    --checkpoint_path=outputs/train_multi_task_dit/checkpoint_1000 \
+    --batch_size=16 \
+    --train_steps=2000 \
+    --device=cuda \
+    --output_dir=outputs/train_multi_task_dit_resumed
+```
+
+**Notes:**
+- The checkpoint directory should contain `model.safetensors` and `config.json` files (saved automatically during training)
+- You can use the same `--output_dir` or specify a new one to avoid overwriting previous checkpoints
+- The model weights will be loaded from the checkpoint, but training will start from step 0 (the step counter resets)
+- Ensure you use the same dataset and compatible configuration settings as the original training run
 
 NOTE: If you are using the toy `pusht` dataset, the images will be below the default crop shape of (224, 224) for CLIP, and you will need to resize the images using:
 ```
@@ -139,6 +176,37 @@ To run in detached mode which will keep the training job running if the terminal
 ```
 --detach=true
 ```
+
+## Baseline Configuration and Tuning
+
+This section provides suggested default configuration parameters and common tuning points for both training and inference.
+
+### Suggested Default Hyperparameters (Assuming 30Hz control frequency)
+```
+- Batch Size: 256-320 -> You will need a larger GPU likely on the cloud for this, but it will result in the best performance
+- Horizon: 32
+- # Number of action steps: 24
+- Objective: Diffusion
+- # of traing steps: 30k steps
+```
+
+### Training Tuning Points
+
+- **Flow Matching with Beta Sampling Distribution**: Consider switching to flow matching with beta sampling distribution for potentially improved performance. This hasn't been shown to be a silver bullet in any experiments I've seen, but it occasionally results in smoother and more consistent actions.
+
+- **Number of Transformer Layers**: The model's capacity should match your dataset size:
+  - **Small datasets** (< 100 examples): Try reducing the number of layers to 4
+  - **Large datasets** (> 5k examples): Try increasing to 8 layers
+
+- **Horizon**: The model can be sensitive to the horizon you choose. Start with around a 1 second horizon based on your control frequency (`horizon=30` for a 30 Hz frequency), then experiment with increasing from there. The horizon determines how far into the future the model predicts actions.
+
+### Inference Tuning Points
+
+- **Diffusion Sampling**: For faster inference, use DDIM with 10 sampling steps instead of the default settings.
+
+- **n_action_steps**: The model can be very sensitive to `n_action_steps`. Start with it being around 0.8 seconds based on your control frequency and tune from there. There's a trade-off between reactiveness and long-horizon task execution and stability:
+  - **Lower values**: More reactive but potentially less stable for long-horizon tasks
+  - **Higher values**: Better for long-horizon execution but may be less responsive
 
 ## Running Inference
 
@@ -215,14 +283,15 @@ Sometimes the robot will completely ignore your instruction and perform some oth
 
 ## Contributing
 
-Contributions, improvements, and bug fixes are welcome! Please feel free to submit bug reports, feature requests, and pull requests. If you leverage this project in your own work, please be mindful of the license.
-
+Contributions, improvements, and bug fixes are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup instructions and guidelines.
 
 ## Acknowledgements and References
 
 Many utility functions were adapted from LeRobot to build this project. Additionally the base structure of the policy was inspired by the LeRobot Vanilla Diffusion Policy implementation, with most interfaces remaining identical to simplify downstream integration into the LeRobot project.
 
-The integration into LeRobot can be found [here](TODO)
+The integration into LeRobot can be found [here](https://github.com/huggingface/lerobot/pull/2545)
+
+> **⚠️ NOTE:** The LeRobot integration is currently in an active merge request that is being worked on to be merged into main.
 
 Additionally, the following resources were referenced during this implementation:
 
@@ -261,7 +330,7 @@ If you use this work in your research, please cite:
   author = {Bryson Jones},
   title = {Dissecting and Open-Sourcing Multitask Diffusion Transformer Policy},
   year = {2025},
-  url = {https://brysonkjones.substack.com/p/dissecting-multitask-diffusion-transformer-policy},
+  url = {https://brysonkjones.substack.com/p/dissecting-and-open-sourcing-multitask-diffusion-transformer-policy},
   note = {Blog post}
 }
 

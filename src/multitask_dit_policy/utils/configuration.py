@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from lerobot.configs.types import FeatureType, PolicyFeature
-from lerobot.utils.constants import ACTION, OBS_ENV_STATE, OBS_STATE
+from lerobot.utils.constants import ACTION, OBS_STATE
 
 from .utils import NormalizationMode
 
@@ -428,10 +428,6 @@ class MultiTaskDiTConfig:
     @property
     def robot_state_feature(self):
         return self.input_features.get(OBS_STATE)
-
-    @property
-    def env_state_feature(self):
-        return self.input_features.get(OBS_ENV_STATE)
 
     @property
     def action_feature(self):

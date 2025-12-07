@@ -217,9 +217,9 @@ class MultiTaskDiTPolicy(nn.Module):
         # Save model weights as safetensors (matching lerobot convention)
         save_model_as_safetensor(self, str(save_directory / "model.safetensors"))
 
-    @classmethod
-    def load(cls, pretrained_model_name_or_path: str | Path):
-        path = Path(pretrained_model_name_or_path)
+    @staticmethod
+    def load(checkpoint_path: str | Path):
+        path = Path(checkpoint_path)
 
         # Load config from JSON using draccus
         config_file = path / "config.json"
@@ -228,9 +228,9 @@ class MultiTaskDiTPolicy(nn.Module):
 
         with draccus.config_type("json"):
             with open(config_file) as f:
-                config = draccus.load(cls.config_class, f)
+                config = draccus.load(MultiTaskDiTConfig, f)
 
-        model = cls(config)
+        model = MultiTaskDiTPolicy(config)
 
         # Load model weights from safetensors (matching lerobot convention)
         model_file = path / "model.safetensors"

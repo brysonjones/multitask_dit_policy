@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mtdp"  # Multi-Task Diffusion Policy
+name = "multitask-dit-policy"  # Multi-Task Diffusion Policy
 version = "0.1.0"
 description = "Multi-Task Diffusion Transformer (DiT) Policy for robot learning"
 readme = "README.md"
 authors = [
     { name="Bryson Jones", email="bkjones97@gmail.com" },
 ]
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.10,<3.11"  # Holding to the LeRobot Python version for simplicity
 dependencies = [
     "torch>=2.7.0",
     "torchvision>=0.15.0",
@@ -33,8 +33,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
     "ruff>=0.1.0",
     "pre-commit>=3.0.0",
 ]
