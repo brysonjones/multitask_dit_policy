@@ -118,7 +118,7 @@ modal volume put multitask_dit_data /path/to/local/dataset /path/on/volume
 
 ### Modal Training
 
-The modal training configuration parameters extend the local training config, allowing you to specfiy compute parameters such as GPU type, # of CPUs, and System RAM. For a complete list, please see the [configuration definition](./src/multitask_dit_policy/train_modal.py)
+The modal training configuration parameters extend the local training config, allowing you to specify compute parameters such as GPU type, # of CPUs, and System RAM. For a complete list, please see the [configuration definition](./src/multitask_dit_policy/train_modal.py)
 
 ```bash
 uv run -m multitask_dit_policy.train_modal \
@@ -149,7 +149,7 @@ This is to simply demonstrate how you would set up an inference loop if you want
 ### Basic Usage
 
 ```bash
-uv run -m multitask_dit_policy.inference_example \
+uv run -m multitask_dit_policy.examples.inference \
     --checkpoint_dir=outputs/train_multi_task_dit_test_1/final_model \
     --dataset_path=/path/to/dataset \
     --device=cuda
@@ -163,7 +163,7 @@ uv run -m multitask_dit_policy.inference_example \
 ### Example
 
 ```bash
-uv run -m multitask_dit_policy.inference_example \
+uv run -m multitask_dit_policy.examples.inference \
     --checkpoint_dir=outputs/train_multi_task_dit_test_1/final_model \
     --dataset_path=/your/local/dir/pusht \
     --device=cuda \
@@ -182,16 +182,16 @@ The script will:
 
 Training these models can be finicky (as is all AI research...)
 
-Here are some common failures modes I've seen when training this particular model, and approaches to debugging
+Here are some common failure modes I've seen when training this particular model, and approaches to debugging
 
 ### Idling / No Motion
 
-In some cases, you may train the model and during inference see it's outputs "collapse", resulting in static or no motion. This collapse can occur at the starting point mid-way through a task.
+In some cases, you may train the model and during inference see its outputs "collapse", resulting in static or no motion. This collapse can occur at the starting point mid-way through a task.
 
 My intuition is this happens when the tasks or training data is especially multi-modal, and based on the observations the policy oscillates in its actions around some average output.
 
 This appears to happen in two specific cases:
-- When you don't have enough training data for your task. If you only have 20-100 examples, try to roughly double your dataset size and try again for the same task. Once you have above 300 examples or so for a single task if you are still seeing this, the task may be too complex, or have some part of the task that's unobservable that is causing the issue.
+- When you don't have enough training data for your task. If you only have 20-50 examples, try to roughly double your dataset size and try again for the same task. Once you have above 300 examples or so for a single task, if you are still seeing this, the task may be too complex, or have some part of the task that's unobservable that is causing the issue.
 - When your dataset contains multiple similar tasks. An example would be picking up and moving 2 different objects. While the object is different, the model is heavily relying on the language conditioning which might not be rich enough to give the model a strong differentiation in the actions it should take.
 
 **Debugging tips:**
@@ -215,12 +215,12 @@ Sometimes the robot will completely ignore your instruction and perform some oth
 
 ## Contributing
 
-Contributions, improvements, and bug fixes are welcome! Please feel free to submit bug reports, feature requests, and pull requests. This project is open to everyone in accordance with the license provided in the repo.
+Contributions, improvements, and bug fixes are welcome! Please feel free to submit bug reports, feature requests, and pull requests. If you leverage this project in your own work, please be mindful of the license.
 
 
 ## Acknowledgements and References
 
-Many utility functions were adapted from LeRobot to build this project. Additionially the base structure of the policy was inspired by the LeRobot Vanilla Diffusion Policy implementation, with most interfaces remaining identical to simplify downstream integration into the LeRobot project.
+Many utility functions were adapted from LeRobot to build this project. Additionally the base structure of the policy was inspired by the LeRobot Vanilla Diffusion Policy implementation, with most interfaces remaining identical to simplify downstream integration into the LeRobot project.
 
 The integration into LeRobot can be found [here](TODO)
 
