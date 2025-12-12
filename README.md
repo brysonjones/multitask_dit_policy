@@ -21,9 +21,16 @@ For a deep dive on technical details of the model, see the blog-post [here](http
 
 ### GPU Requirements
 
-- **Inference**: At least an RTX 5070 Ti (or equivalent GPU) is recommended for running inference with reasonable speed performance.
+- **Inference**: At least an RTX 4070 Ti (or equivalent GPU) is recommended for running inference with reasonable speed performance.
 - **Training**: A GPU with at least 24GB of VRAM is recommended for training, as I would target batch sizes over 128 if possible for training stability.
 
+> [!WARNING]
+>
+> **Note on Blackwell GPUs:** if you use a 5XXX or B200 GPU, you will hit compatibility issues. This is because of a mismatch between the needed CUDA version and the version currently officially supported by lerobot.
+>
+> A potential workaround that is unstable, but did work for me is to run `uv install --upgrade torch torchvision torchcodec`.
+>
+> This will upgrade your torch and CUDA versions, which works as of `torch==2.9.x`, but beware this could change at any moment and is not officially supported
 
 ## Environment Setup
 
@@ -133,7 +140,7 @@ Install Modal CLI and authenticate:
 
 ```bash
 uv sync --extra modal
-modal token new
+uv run modal token new
 ```
 
 ### Creating a Volume
