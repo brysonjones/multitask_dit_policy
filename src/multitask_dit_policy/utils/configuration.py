@@ -181,6 +181,10 @@ class TransformerConfig:
     use_positional_encoding: bool = True  # Whether to use positional encoding
     diffusion_step_embed_dim: int = 256  # Timestep embedding size
 
+    # RoPE (Rotary Position Embedding) parameters
+    use_rope: bool = False  # Whether to use Rotary Position Embedding in attention
+    rope_base: float = 10000.0  # Base frequency for RoPE computation
+
     def __post_init__(self):
         """Validate Transformer-specific parameters."""
         if self.hidden_dim <= 0:
@@ -200,6 +204,18 @@ class TransformerConfig:
 
         if self.diffusion_step_embed_dim <= 0:
             raise ValueError("diffusion_step_embed_dim must be positive")
+
+        if self.rope_base <= 0:
+            raise ValueError("rope_base must be positive")
+
+        # Validate that head_dim is even when RoPE is enabled
+        if self.use_rope:
+            head_dim = self.hidden_dim // self.num_heads
+            if head_dim % 2 != 0:
+                raise ValueError(
+                    f"head_dim ({head_dim}) must be even when use_rope=True. "
+                    f"Adjust hidden_dim ({self.hidden_dim}) or num_heads ({self.num_heads}) accordingly."
+                )
 
 
 @dataclass
