@@ -126,9 +126,7 @@ NOTE: If you are using the toy `pusht` dataset, the images will be below the def
 
 ## Cloud Training Using Modal
 
-Modal has a great developer experience, especially when you're just doing small training experiments up to 8 GPUs. I've added a simple script that will deploy training jobs onto modal with specified GPU resources.
-
-> **⚠️ NOTE:** Compared to some GPU providers, Modal's prices can be noticeably higher (sometimes >1.5x the commodity price or more). Please budget accordingly and check costs before launching long jobs!
+Modal has a great developer experience (along with some great on-demand pricing compared to clouds like GCP), especially when you're just doing small training experiments up to 8 GPUs. I've added a simple script that will deploy training jobs onto modal with specified GPU resources.
 
 Below is an overview of how you can use scripts to train a policy on modal
 
@@ -294,11 +292,10 @@ Contributions, improvements, and bug fixes are welcome! Please see [CONTRIBUTING
 
 ## Acknowledgements and References
 
-Many utility functions were adapted from LeRobot to build this project. Additionally the base structure of the policy was inspired by the LeRobot Vanilla Diffusion Policy implementation, with most interfaces remaining identical to simplify downstream integration into the LeRobot project.
+Many utility functions were adapted from LeRobot to build this project.
 
-The integration into LeRobot can be found [here](https://github.com/huggingface/lerobot/pull/2545)
+The integration into LeRobot can be found [here](https://github.com/huggingface/lerobot/src/lerobot/policies/multi_task_dit)
 
-> **⚠️ NOTE:** The LeRobot integration is currently in an active merge request that is being worked on to be merged into main.
 
 Additionally, the following resources were referenced during this implementation:
 
