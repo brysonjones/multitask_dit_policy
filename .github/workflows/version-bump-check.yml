@@ -26,7 +26,7 @@ jobs:
         CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
         
         # Define documentation files (add more as needed)
-        DOC_FILES="README.md CONTRIBUTING.md LICENSE docs/** *.md"
+        DOC_FILES="README.md CONTRIBUTING.md LICENSE docs/** *.md .github/**"
         
         # Check if any changed files are not documentation
         NON_DOC_CHANGES=false
@@ -34,7 +34,7 @@ jobs:
           # Check if file matches any doc pattern
           IS_DOC=false
           for pattern in $DOC_FILES; do
-            if [[ $file == $pattern ]] || [[ $file == docs/* ]]; then
+            if [[ $file == $pattern ]] || [[ $file == docs/* ]] || [[ $file == .github/* ]]; then
               IS_DOC=true
               break
             fi
