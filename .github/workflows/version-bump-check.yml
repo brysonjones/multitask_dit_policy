@@ -1,0 +1,61 @@
+name: Version Bump Check
+
+on:
+  pull_request:
+    branches: [ main ]  # Adjust to your default branch
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout PR branch
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get changed files
+      id: changed-files
+      run: |
+        # Get files changed in this PR
+        CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+    - name: Check if version bump required
+      run: |
+        CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
+        
+        # Define documentation files (add more as needed)
+        DOC_FILES="README.md CONTRIBUTING.md LICENSE docs/** *.md"
+        
+        # Check if any changed files are not documentation
+        NON_DOC_CHANGES=false
+        for file in $CHANGED_FILES; do
+          # Check if file matches any doc pattern
+          IS_DOC=false
+          for pattern in $DOC_FILES; do
+            if [[ $file == $pattern ]] || [[ $file == docs/* ]]; then
+              IS_DOC=true
+              break
+            fi
+          done
+          if [[ $IS_DOC == false ]]; then
+            NON_DOC_CHANGES=true
+            break
+          fi
+        done
+        
+        if [[ $NON_DOC_CHANGES == false ]]; then
+          echo "Only documentation files changed. No version bump required."
+          exit 0
+        fi
+        
+        # Check if pyproject.toml version changed
+        VERSION_CHANGED=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- pyproject.toml | grep -c "^+version")
+        
+        if [[ $VERSION_CHANGED -eq 0 ]]; then
+          echo "Error: Non-documentation files changed but version not bumped in pyproject.toml"
+          exit 1
+        else
+          echo "Version bump detected. Proceeding."
+        fi
