@@ -1,7 +1,7 @@
 # multitask_dit_policy
 An open-source implementation of Multitask Diffusion-Transformer (DiT) Policy for robot manipulation
 
-![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)
+![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)
 ![Version](https://img.shields.io/badge/version-0.1.0-green.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
