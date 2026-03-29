@@ -21,16 +21,8 @@ For a deep dive on technical details of the model, see the blog-post [here](http
 
 ### GPU Requirements
 
-- **Inference**: At least an RTX 4070 Ti (or equivalent GPU) is recommended for running inference with reasonable speed performance.
-- **Training**: A GPU with at least 24GB of VRAM is recommended for training, as I would target batch sizes over 128 if possible for training stability.
-
-> [!WARNING]
->
-> **Note on Blackwell GPUs:** if you use a 5XXX or B200 GPU, you will hit compatibility issues. This is because of a mismatch between the needed CUDA version and the version currently officially supported by lerobot.
->
-> A potential workaround that is unstable, but did work for me is to run `uv install --upgrade torch torchvision torchcodec`.
->
-> This will upgrade your torch and CUDA versions, which works as of `torch==2.9.x`, but beware this could change at any moment and is not officially supported
+- **Inference**: At least an RTX 4070 Ti (or equivalent GPU) is recommended for running inference with reasonable speed performance, preferably something that is a 50XX chip (the blackwell silicon really makes a difference for low latency inference here)
+- **Training**: Access to a cloud GPU with >80GB of VRAM at least is recommended for training, as I would target batch sizes over 128 if possible for training stability. If you need to, use gradient accumulation.
 
 ## Environment Setup
 
@@ -188,7 +180,7 @@ This section provides suggested default configuration parameters and common tuni
 
 ### Suggested Default Hyperparameters (Assuming 30Hz control frequency)
 ```
-- Batch Size: 256-320 -> You will need a larger GPU likely on the cloud for this, but it will result in the best performance
+- Batch Size: 256-320 -> To do this without any gradient accumulation you will need a H200 or B200
 - Horizon: 32
 - # Number of action steps: 24
 - Objective: Diffusion
@@ -294,7 +286,7 @@ Contributions, improvements, and bug fixes are welcome! Please see [CONTRIBUTING
 
 Many utility functions were adapted from LeRobot to build this project.
 
-The integration into LeRobot can be found [here](https://github.com/huggingface/lerobot/src/lerobot/policies/multi_task_dit)
+The integration into LeRobot can be found [here](https://github.com/huggingface/lerobot/tree/main/src/lerobot/policies/multi_task_dit)
 
 
 Additionally, the following resources were referenced during this implementation:
